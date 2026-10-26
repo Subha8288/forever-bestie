@@ -1,0 +1,15 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Keep local environment secrets private
+.env*
+!.env.example
+
+# Local AI Studio metadata
+.aistudio/

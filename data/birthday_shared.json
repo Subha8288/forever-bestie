@@ -1,0 +1,63 @@
+{
+  "avatar": "/assets/aistudio/image_412bf481.png",
+  "bestieName": "Sakshi",
+  "nickname": "Kaleshi",
+  "senderName": "subho",
+  "birthDate": "27 Oct 2027",
+  "targetDateTime": "2027-10-27T00:00:00",
+  "photos": [
+    {
+      "id": 1,
+      "url": "/assets/aistudio/image_412bf481.png",
+      "caption": "Happy Birthday to my favorite Kaleshi! 🎂✨",
+      "date": "27 Oct 2027",
+      "location": "Celebration Day",
+      "category": "Portrait",
+      "uploadedBy": "Subho"
+    },
+    {
+      "id": 2,
+      "url": "/assets/aistudio/image_412bf481.png",
+      "caption": "The most chaotic yet sweetest best friend in the world 💕",
+      "date": "Memories of Us",
+      "location": "Forever Besties",
+      "category": "Friends",
+      "uploadedBy": "Subho"
+    },
+    {
+      "id": 3,
+      "url": "/assets/aistudio/image_412bf481.png",
+      "caption": "Here is to a lifetime of dramatic rants and laughing till our stomach hurts! 🎉",
+      "date": "Late Night Talks",
+      "location": "Unfiltered Sakshi",
+      "category": "Candid",
+      "uploadedBy": "Subho"
+    }
+  ],
+  "letters": [
+    {
+      "id": 1,
+      "name": "Subho",
+      "title": "Happy Birthday, My Favorite Kaleshi!",
+      "msg": "Wish you the absolute happiest birthday, Sakshi! You make life a million times funnier, warmer, and more exciting just by existing. Never stop being your dramatic, hilarious, golden self!",
+      "theme": "from-rose-100 to-pink-100 border-rose-300 text-rose-950",
+      "createdAt": "27 Oct 2027"
+    },
+    {
+      "id": 2,
+      "name": "Subho",
+      "title": "The Unstoppable Duo",
+      "msg": "One message or phone call from you can change my whole day, my whole mood, and my whole mindset. Nobody gets my chaotic thoughts like you do.",
+      "theme": "from-amber-100 to-rose-100 border-amber-300 text-amber-950",
+      "createdAt": "27 Oct 2027"
+    },
+    {
+      "id": 3,
+      "name": "Subho",
+      "title": "To Our Endless Fights & Pure Friendship",
+      "msg": "Even when we argue over the silly things, you are always the first person I want to celebrate with. Here is to 27 Oct 2027 and every single year after that!",
+      "theme": "from-purple-100 to-rose-100 border-purple-300 text-purple-950",
+      "createdAt": "27 Oct 2027"
+    }
+  ]
+}

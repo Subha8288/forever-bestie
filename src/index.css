@@ -1,0 +1,34 @@
+@import "tailwindcss";
+
+@theme {
+  --font-dancingScript: "Dancing Script", cursive;
+  --font-coiny: "Coiny", system-ui;
+  --font-sriracha: "Sriracha", cursive;
+  --font-caveat: "Caveat", cursive;
+}
+
+/* Base custom font helpers */
+.font-dancingScript {
+  font-family: var(--font-dancingScript);
+}
+
+.font-coiny {
+  font-family: var(--font-coiny);
+}
+
+.font-sriracha {
+  font-family: var(--font-sriracha);
+}
+
+.font-caveat {
+  font-family: var(--font-caveat);
+}
+
+/* Ensure smooth scrolling and root presentation */
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
+}

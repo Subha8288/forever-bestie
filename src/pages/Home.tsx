@@ -1,0 +1,527 @@
+import React, { useEffect, useState } from 'react';
+import png from '../assets/1.png';
+import ballon1 from '../assets/balloon1.png';
+import ballon2 from '../assets/balloon2.png';
+import decorate from '../assets/decorate.png';
+import decoFlowers from '../assets/decorate_flower.png';
+import hat from '../assets/hat.png';
+import smileIcon from '../assets/smiley_icon.png';
+import sakshiPhoto from '../assets/sakshi_photo.png';
+import { Link } from 'react-router';
+import BookCanvas from '../components/BookCanvas';
+import { CountdownWatch } from '../components/CountdownWatch';
+import { MemoriesGallery } from '../components/MemoriesGallery';
+import {
+  Camera,
+  Volume2,
+  VolumeX,
+  Sparkles,
+  Settings,
+  RotateCcw,
+  Clock,
+  Images,
+  Mail,
+  Heart,
+  X,
+  Lock,
+  Crown,
+  Music,
+} from 'lucide-react';
+import { soundManager } from '../utils/audio';
+import { api } from '../utils/api';
+import { compressImageForStorage, uploadMedia, saveSharedSetting, getSharedSetting, isSupabaseConfigured } from '../supabase';
+import { useAuth } from '../context/AuthContext';
+import { LoginModal } from '../components/LoginModal';
+import { SakshiVIPModal } from '../components/SakshiVIPModal';
+
+interface HomeProps {
+  bestieName: string;
+  nickname: string;
+  senderName: string;
+  birthDate: string;
+  targetDateTime: string;
+  onOpenSettings: () => void;
+  onReplayCake: () => void;
+}
+
+const Home: React.FC<HomeProps> = ({
+  bestieName = 'Sakshi',
+  nickname = 'Kaleshi',
+  senderName = 'subho',
+  birthDate = '27 Oct 2027',
+  targetDateTime = '2027-10-27T00:00:00',
+  onOpenSettings,
+  onReplayCake,
+}) => {
+  const [active, setActive] = useState(true);
+  const { isLoggedIn } = useAuth();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isVIPModalOpen, setIsVIPModalOpen] = useState(false);
+  const [userAvatar, setUserAvatar] = useState(() => {
+    try {
+      const saved = localStorage.getItem('sakshi_avatar');
+      if (saved && !saved.includes('Screenshot_20261026_124913')) return saved;
+    } catch {
+      // Ignore
+    }
+    return sakshiPhoto;
+  });
+
+  const [isPlayingMusic, setIsPlayingMusic] = useState(false);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isMidnightUnlocked, setIsMidnightUnlocked] = useState(true);
+
+  // Prefer the persistent Supabase avatar; use the legacy API only if no shared value exists.
+  useEffect(() => {
+    const loadAvatar = async () => {
+      if (isSupabaseConfigured()) {
+        try {
+          const sharedUrl = await getSharedSetting<string>('avatar');
+          if (sharedUrl && !sharedUrl.includes('Screenshot_20261026_124913')) {
+            setUserAvatar(sharedUrl);
+            try { localStorage.setItem('sakshi_avatar', sharedUrl); } catch { /* Ignore */ }
+            return;
+          }
+        } catch (error) {
+          console.warn('Could not load shared avatar from Supabase:', error);
+        }
+      }
+
+      const data = await api.getSharedData();
+      if (data?.avatar) {
+        const avatar = data.avatar.includes('Screenshot_20261026_124913') ? sakshiPhoto : data.avatar;
+        setUserAvatar(avatar);
+        try { localStorage.setItem('sakshi_avatar', avatar); } catch { /* Ignore */ }
+      }
+    };
+    void loadAvatar();
+  }, []);
+
+  useEffect(() => {
+    const datetxt = birthDate || '27 Oct 2027';
+    const charArrDate = datetxt.split('');
+    let currentIndex = 0;
+    const dateOfBirthEl = document.querySelector('.date__of__birth span');
+    if (!dateOfBirthEl) return;
+
+    dateOfBirthEl.textContent = '';
+    let typedText = '';
+
+    const timer = setTimeout(() => {
+      const timeDatetxt = setInterval(() => {
+        if (currentIndex < charArrDate.length) {
+          typedText += charArrDate[currentIndex];
+          if (dateOfBirthEl) dateOfBirthEl.textContent = typedText;
+          currentIndex++;
+        } else {
+          clearInterval(timeDatetxt);
+          if (dateOfBirthEl && !dateOfBirthEl.classList.contains('svg-added')) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+            svg.setAttribute('width', '24');
+            svg.setAttribute('height', '24');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.innerHTML = `<path fill="#a31414" d="M18.483 16.767A8.5 8.5 0 0 1 8.118 7.081a1 1 0 0 1-.113.097c-.28.213-.63.292-1.33.45l-.635.144c-2.46.557-3.69.835-3.983 1.776c-.292.94.546 1.921 2.223 3.882l.434.507c.476.557.715.836.822 1.18c.107.345.071.717-.001 1.46l-.066.677c-.253 2.617-.38 3.925.386 4.506s1.918.052 4.22-1.009l.597-.274c.654-.302.981-.452 1.328-.452s.674.15 1.329.452l.595.274c2.303 1.06 3.455 1.59 4.22 1.01c.767-.582.64-1.89.387-4.507z"/> <path fill="#a31414" d="m9.153 5.408l-.328.588c-.36.646-.54.969-.82 1.182q.06-.045.113-.097a8.5 8.5 0 0 0 10.366 9.686l-.02-.19c-.071-.743-.107-1.115 0-1.46c.107-.344.345-.623.822-1.18l.434-.507c1.677-1.96 2.515-2.941 2.222-3.882c-.292-.941-1.522-1.22-3.982-1.776l-.636-.144c-.699-.158-1.049-.237-1.33-.45c-.28-.213-.46-.536-.82-1.182l-.327-.588C13.58 3.136 12.947 2 12 2s-1.58 1.136-2.847 3.408" opacity="0.5"/>`;
+            const container = document.querySelector('.date__of__birth');
+            if (container) {
+              container.prepend(svg);
+              container.appendChild(svg.cloneNode(true));
+              dateOfBirthEl.classList.add('svg-added');
+            }
+          }
+        }
+      }, 35);
+    }, 700);
+
+    return () => clearTimeout(timer);
+  }, [birthDate]);
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const compressed = await compressImageForStorage(file, 800, 0.85);
+      const publicUrl = await uploadMedia(compressed, 'photos');
+      setUserAvatar(publicUrl);
+      try { localStorage.setItem('sakshi_avatar', publicUrl); } catch { /* Ignore */ }
+      await saveSharedSetting('avatar', publicUrl);
+      soundManager.playSparkle();
+    } catch (error) {
+      console.error('Error updating avatar:', error);
+      window.alert(error instanceof Error ? error.message : 'Avatar upload failed. Check your Supabase setup.');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const toggleMusic = () => {
+    if (isPlayingMusic) {
+      soundManager.stopMelody();
+      setIsPlayingMusic(false);
+    } else {
+      soundManager.isMuted = false;
+      setIsMuted(false);
+      setIsPlayingMusic(true);
+      soundManager.playHappyBirthdayMelody(true, () => {
+        setIsPlayingMusic(false);
+      });
+    }
+  };
+
+  const toggleMute = () => {
+    const nextState = !isMuted;
+    soundManager.isMuted = nextState;
+    setIsMuted(nextState);
+    if (nextState && isPlayingMusic) {
+      soundManager.stopMelody();
+      setIsPlayingMusic(false);
+    }
+  };
+
+  return (
+    <>
+      <div id="wrapper" className="pb-24">
+        {/* Floating Top Control Island */}
+        <header className="sticky top-0 z-40 bg-white/75 backdrop-blur-md border-b border-rose-100/80 px-4 py-2.5 transition-all shadow-xs">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-3">
+            {/* Left Tools */}
+            <div className="flex items-center gap-2">
+              <span className="font-serif-display font-bold text-sm sm:text-base text-rose-950 hidden sm:inline">
+                Sakshi&apos;s Birthday
+              </span>
+              <button
+                onClick={onReplayCake}
+                className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-900 bg-white/80 hover:bg-white rounded-full shadow-xs border border-rose-200 transition-all cursor-pointer"
+                title="Replay cake opening animation"
+              >
+                <RotateCcw className="w-3.5 h-3.5 text-rose-600" />
+                <span className="hidden sm:inline">Replay Intro</span>
+              </button>
+              <button
+                onClick={toggleMusic}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full shadow-xs border transition-all cursor-pointer ${
+                  isPlayingMusic
+                    ? 'bg-rose-600 text-white border-rose-500 animate-pulse'
+                    : 'bg-white/80 text-rose-900 border-rose-200 hover:bg-white'
+                }`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{isPlayingMusic ? 'Melody Playing' : 'Birthday Music'}</span>
+              </button>
+              <button
+                onClick={toggleMute}
+                className="p-1.5 rounded-full bg-white/80 hover:bg-white text-rose-700 border border-rose-200 shadow-xs cursor-pointer"
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              </button>
+            </div>
+
+            {/* Right Tools */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  soundManager.playSparkle();
+                  document.getElementById('countdown-watch')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100/70 rounded-full hidden md:inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Clock className="w-3.5 h-3.5" />
+                <span>Countdown</span>
+              </button>
+              <button
+                onClick={() => {
+                  soundManager.playSparkle();
+                  document.getElementById('memories-section')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100/70 rounded-full hidden md:inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Images className="w-3.5 h-3.5" />
+                <span>Memories</span>
+              </button>
+              <Link
+                to="/love-letter"
+                className="px-3 py-1.5 text-xs font-medium text-rose-800 hover:bg-rose-100/70 rounded-full inline-flex items-center gap-1 cursor-pointer"
+              >
+                <Mail className="w-3.5 h-3.5 text-rose-600" />
+                <span>Love Letters</span>
+              </Link>
+
+              {/* Replay Animation Quick Trigger */}
+              <button
+                onClick={onReplayCake}
+                className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-rose-700 bg-rose-50 hover:bg-rose-100 rounded-full border border-rose-200 transition-all cursor-pointer"
+                title="Watch the opening celebration animation"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-rose-500" />
+                <span>Show Celebration</span>
+              </button>
+
+              {/* Sakshi Access Status / Sign In Button */}
+              {isLoggedIn ? (
+                <button
+                  onClick={() => setIsVIPModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-rose-950 bg-gradient-to-r from-pink-200 via-rose-200 to-pink-200 hover:from-pink-300 hover:to-rose-300 rounded-full shadow-xs hover:shadow border border-rose-300 transition-all cursor-pointer"
+                  title="Sakshi's Space (All Access Unlocked)"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-rose-600" />
+                  <span className="hidden xs:inline">Sakshi&apos;s Space</span>
+                  <span className="xs:hidden">Sakshi</span>
+                </button>
+              ) : (
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-rose-800 bg-rose-100 hover:bg-rose-200 rounded-full border border-rose-200 shadow-xs transition-all cursor-pointer"
+                  title="Sakshi Login & Access"
+                >
+                  <Lock className="w-3.5 h-3.5 text-rose-600" />
+                  <span>Sign In</span>
+                </button>
+              )}
+
+              <button
+                onClick={onOpenSettings}
+                className="flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded-full shadow-xs hover:shadow transition-all cursor-pointer"
+              >
+                <Settings className="w-3.5 h-3.5" />
+                <span>Customize</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* 1. COUNTDOWN WATCH TO 12:00 AM ON 27 OCT 2027 */}
+        <div id="countdown-watch" className="pt-4">
+          <CountdownWatch
+            targetDate={targetDateTime || '2027-10-27T00:00:00'}
+            bestieName={bestieName}
+            nickname={nickname}
+            onMidnightUnlocked={() => setIsMidnightUnlocked(true)}
+            isUnlocked={isMidnightUnlocked}
+            setIsUnlocked={setIsMidnightUnlocked}
+          />
+        </div>
+
+        {/* 2. MAIN BIRTHDAY CARD STAGE */}
+        <div className="relative pt-4">
+          {/* Birthday Flags */}
+          <div className="flag__birthday">
+            <img src={png} alt="" width="350" className="flag__left" />
+            <img src={png} alt="" width="350" className="flag__right" />
+          </div>
+
+          <div className="content">
+            <div className="left">
+              <div className="title">
+                <h1 className="happy">
+                  <span style={{ '--t': '0.2s' } as React.CSSProperties}>H</span>
+                  <span style={{ '--t': '0.35s' } as React.CSSProperties}>a</span>
+                  <span style={{ '--t': '0.5s' } as React.CSSProperties}>p</span>
+                  <span style={{ '--t': '0.65s' } as React.CSSProperties}>p</span>
+                  <span style={{ '--t': '0.8s' } as React.CSSProperties}>y</span>
+                </h1>
+                <h1 className="birthday">
+                  <span style={{ '--t': '1.0s' } as React.CSSProperties}>B</span>
+                  <span style={{ '--t': '1.15s' } as React.CSSProperties}>i</span>
+                  <span style={{ '--t': '1.3s' } as React.CSSProperties}>r</span>
+                  <span style={{ '--t': '1.45s' } as React.CSSProperties}>t</span>
+                  <span style={{ '--t': '1.6s' } as React.CSSProperties}>h</span>
+                  <span style={{ '--t': '1.75s' } as React.CSSProperties}>d</span>
+                  <span style={{ '--t': '1.9s' } as React.CSSProperties}>a</span>
+                  <span style={{ '--t': '2.05s' } as React.CSSProperties}>y</span>
+                </h1>
+                <div className="hat">
+                  <img src={hat} alt="" width="130" />
+                </div>
+              </div>
+
+              <div className="date__of__birth">
+                <span></span>
+              </div>
+
+              <div className="btn flex md:gap-3 md:flex-row flex-col mt-4">
+                <button
+                  onClick={() => {
+                    soundManager.playSparkle();
+                    setActive(!active);
+                  }}
+                  id="btn__letter"
+                  className="cursor-pointer"
+                >
+                  <div className="mail flex items-center justify-center gap-2 md:text-[1rem] text-sm">
+                    <svg className="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+                      <path
+                        fill="#d13852"
+                        d="M63.841 18.646c-.246-3.85-1.072-6.977-3.752-10.198c-5.369-6.439-17.71-7.511-23.23-1.312c-.963.912-1.872 2.01-2.785 3.322l-2.066 2.969l-2.067-2.969c-.916-1.312-1.827-2.411-2.79-3.322C21.627.937 9.287 2.008 3.921 8.448C1.237 11.669.412 14.796.166 18.646C-.184 30.092 8.122 39.257 9.147 40.6c5.637 6.613 11.786 12.866 18.03 18.627c1.13.989 2.106 1.812 3.082 2.628c.587.479 1.166.964 1.749 1.44c.582-.477 1.159-.961 1.743-1.44c.98-.816 1.956-1.639 3.082-2.628c6.247-5.761 12.397-12.01 18.04-18.627c1.025-1.343 9.332-10.508 8.979-21.954"
+                      />
+                      <path
+                        fill="#f1a5b1"
+                        d="M60.39 16.604a10.1 10.1 0 0 0-.457-2.909a9 9 0 0 0-1.169-2.42c-2.973-4.369-9.451-5.943-14.863-4.837c-2.111.508-4.225 1.302-5.197 3.318c-.331.865.365 1.281 1.44 1.228c3.894-.435 8.202-.043 11.645 1.63c.858.42 1.661.918 2.395 1.503c2.47 1.913 3.537 4.887 4.02 7.837c1.201-.242 1.854-1.683 2.01-2.965a10.5 10.5 0 0 0 .177-2.385"
+                      />
+                    </svg>
+                    <span>Click Here {bestieName}</span>
+                  </div>
+                </button>
+                <div id="FromRexon">
+                  <Link to="/love-letter" className="flex items-center gap-2 md:text-[1rem] text-sm cursor-pointer">
+                    <svg className="w-7 h-7" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72">
+                      <path
+                        fill="#fff"
+                        d="M65.086 55.5H6.878A2.877 2.877 0 0 1 4 52.623V17.248A2.25 2.25 0 0 1 6.248 15h59.446A2.306 2.306 0 0 1 68 17.306v35.28a2.914 2.914 0 0 1-2.914 2.914"
+                      />
+                      <path
+                        fill="#ea5a47"
+                        d="M47.064 33.552A5.885 5.885 0 0 0 36 30.755a5.885 5.885 0 0 0-11.064 2.797c0 1.398.49 2.68 1.304 3.69l-.002.002L36 49.342l9.762-12.098l-.003-.002a5.86 5.86 0 0 0 1.305-3.69"
+                      />
+                      <g fill="none" stroke="#000" strokeMiterlimit="10" strokeWidth="2">
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M65.086 55.5H6.878A2.877 2.877 0 0 1 4 52.623V17.248A2.25 2.25 0 0 1 6.248 15h59.446A2.306 2.306 0 0 1 68 17.306v35.28a2.914 2.914 0 0 1-2.914 2.914"
+                        />
+                        <path strokeLinecap="round" d="m5 16l15 16m47-16L52 32" />
+                        <path
+                          strokeLinejoin="round"
+                          d="M47.064 33.552A5.885 5.885 0 0 0 36 30.755a5.885 5.885 0 0 0-11.064 2.797c0 1.398.49 2.68 1.304 3.69l-.002.002L36 49.342l9.762-12.098l-.003-.002a5.86 5.86 0 0 0 1.305-3.69z"
+                        />
+                      </g>
+                    </svg>
+                    <span>From {senderName}</span>
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            <div className="right">
+              <div className="box__account">
+                {/* Sakshi's Unblocked Avatar with Romantic Glow & Favorite Song Click */}
+                <div
+                  onClick={() => {
+                    soundManager.resumeAudioContext().then(() => {
+                      soundManager.playSakshiFavoriteSong(true);
+                    });
+                  }}
+                  className="image relative group z-10 cursor-pointer"
+                  title="Click to play Sakshi's favorite song (Tum Hi Ho) 💕"
+                >
+                  <img src={userAvatar} alt="Sakshi avatar" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  
+                  {/* Floating music note icon on hover */}
+                  <div className="absolute inset-0 bg-rose-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <span className="p-2 bg-rose-600/90 text-white rounded-full shadow-lg">
+                      <Music className="w-4 h-4 animate-bounce" />
+                    </span>
+                  </div>
+
+                  <label
+                    onClick={(e) => e.stopPropagation()}
+                    className="absolute bottom-2 right-2 p-2 bg-white/95 hover:bg-white text-rose-800 rounded-full shadow-lg cursor-pointer transition-all hover:scale-110 active:scale-95 z-20"
+                    title="Change Sakshi's photo"
+                  >
+                    <Camera className="w-4 h-4" />
+                    <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                  </label>
+                </div>
+                <div className="name z-10">
+                  <i className="fa-solid fa-heart text-rose-500"></i>
+                  <span>Dear {bestieName} ({nickname})</span>
+                  <i className="fa-solid fa-heart text-rose-500"></i>
+                </div>
+                <div className="balloon_one pointer-events-none">
+                  <img width="100px" src={ballon1} alt="" />
+                </div>
+                <div className="balloon_two pointer-events-none">
+                  <img width="100px" src={ballon2} alt="" />
+                </div>
+              </div>
+
+              <div className="cricle">
+                <div className="text__cricle">
+                  {['h', 'a', 'p', 'p', 'y', '-', 'b', 'i', 'r', 't', 'h', 'd', 'a', 'y', '-'].map(
+                    (char, i) => (
+                      <span key={i} style={{ '--i': i + 1 } as React.CSSProperties}>
+                        {char}
+                      </span>
+                    )
+                  )}
+                </div>
+                <i className="fa-solid fa-heart text-rose-500"></i>
+              </div>
+            </div>
+          </div>
+
+          {[1, 2, 3, 4, 5].map((n, i) => (
+            <div
+              key={i}
+              className={`decorate_star star${n} pointer-events-none`}
+              style={{ '--t': `${0.8 + i * 0.1}s` } as React.CSSProperties}
+            ></div>
+          ))}
+
+          <div className="decorate_flower--one pointer-events-none" style={{ '--t': '0.9s' } as React.CSSProperties}>
+            <img width="20" src={decoFlowers} alt="" />
+          </div>
+          <div className="decorate_flower--two pointer-events-none" style={{ '--t': '1.0s' } as React.CSSProperties}>
+            <img width="20" src={decoFlowers} alt="" />
+          </div>
+          <div className="decorate_flower--three pointer-events-none" style={{ '--t': '1.1s' } as React.CSSProperties}>
+            <img width="20" src={decoFlowers} alt="" />
+          </div>
+
+          <div className="decorate_bottom pointer-events-none">
+            <img src={decorate} alt="" width="100" />
+          </div>
+
+          <div className="smiley__icon pointer-events-none">
+            <img src={smileIcon} alt="" width="100" />
+          </div>
+
+          {/* 3D BookCanvas */}
+          <BookCanvas
+            active={active}
+            setActive={setActive}
+            bestieName={bestieName}
+            senderName={senderName}
+          />
+        </div>
+
+        {/* MEMORIES OF SAKSHI PHOTO GALLERY */}
+        <div className="relative z-20 mt-12 sm:mt-16">
+          <MemoriesGallery
+            bestieName={bestieName}
+            nickname={nickname}
+            senderName={senderName}
+          />
+        </div>
+
+        {/* Footer Note */}
+        <footer className="mt-16 text-center text-xs text-rose-800/70 border-t border-rose-200/50 pt-8 max-w-xl mx-auto px-4">
+          <div className="flex items-center justify-center gap-1.5 font-semibold text-rose-950 mb-1">
+            <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+            <span>Dedicated to Sakshi (Kaleshi) from Subho</span>
+            <Heart className="w-3.5 h-3.5 fill-rose-500 text-rose-500" />
+          </div>
+          <p className="text-[11px] text-rose-700/60">
+            Celebrating 27 Oct 2027 · Bound with endless laughs, chaotic memories &amp; true friendship.
+          </p>
+        </footer>
+        {/* VIP Access Modals */}
+        <LoginModal
+          isOpen={isLoginModalOpen}
+          onClose={() => setIsLoginModalOpen(false)}
+          onLoginSuccess={() => setIsVIPModalOpen(true)}
+        />
+
+        <SakshiVIPModal
+          isOpen={isVIPModalOpen}
+          onClose={() => setIsVIPModalOpen(false)}
+          bestieName={bestieName}
+          senderName={senderName}
+          onReplayAnimation={onReplayCake}
+        />
+      </div>
+    </>
+  );
+};
+
+export default Home;

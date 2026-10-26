@@ -1,0 +1,6 @@
+{
+  "name": "Forever Bestie - Romantic Birthday Celebration",
+  "description": "An enchanting birthday celebration experience for your bestie featuring an interactive glowing cake, 3D flip-book memory card, draggable love notes envelope, and heartfelt diary wishes.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
